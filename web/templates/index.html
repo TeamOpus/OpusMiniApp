@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>🎧 Opus Mini App</title>
+  <style>
+    body { font-family: sans-serif; background: #0f0f0f; color: white; text-align: center; }
+    audio { margin: 20px; width: 90%; max-width: 500px; }
+    .song { padding: 5px; }
+    button { margin: 5px; padding: 10px 15px; border: none; background: #1db954; color: white; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>Now Playing</h2>
+  <div id="current">Loading...</div>
+  <audio id="player" controls autoplay onended="nextSong()"></audio>
+
+  <div>
+    <button onclick="skipSong()">⏭ Skip</button>
+    <button onclick="loadQueue()">🔁 Reload Queue</button>
+  </div>
+
+  <h3>Queue:</h3>
+  <div id="queue"></div>
+
+  <script>
+    const chatId = {{ chat_id }};
+    const player = document.getElementById("player");
+
+    async function nextSong() {
+      const res = await fetch(`/api/pop/${chatId}`, { method: "POST" });
+      const data = await res.json();
+      if (data.status === "ok") {
+        document.getElementById("current").innerText = data.title;
+        player.src = "/" + data.file_path;
+        player.play();
+        loadQueue();
+      } else {
+        document.getElementById("current").innerText = "Queue finished.";
+        player.src = "";
+      }
+    }
+
+    async function loadQueue() {
+      const res = await fetch(`/api/queue/${chatId}`);
+      const data = await res.json();
+      let html = "";
+      data.forEach((track, i) => {
+        html += `<div class="song">${i + 1}. ${track.title}</div>`;
+      });
+      document.getElementById("queue").innerHTML = html;
+    }
+
+    function skipSong() {
+      nextSong();
+    }
+
+    nextSong();
+    loadQueue();
+  </script>
+</body>
+</html>
